@@ -30,6 +30,12 @@ public class wte_web_api extends HttpServlet {
 	//constructor
     public wte_web_api() { }
 
+    private String canteen_query = "", location_query = "", store_type_query = "", 
+			cuisine_query = "", halal_query = "", aircon_query="", distinct_query ="",
+			query_key_str="*";
+    
+    private String search, search_string;
+    
 	@Override
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) 
 		throws ServletException, IOException    {
@@ -42,23 +48,21 @@ public class wte_web_api extends HttpServlet {
 		String query_key = req.getParameter("query_key");
 		String distinct = req.getParameter("distinct");
 		String output = req.getParameter("output");
+		search = req.getParameter("search");
+		search_string = req.getParameter("search_string");
 		
 		Database db = DBFactory.loadDatabase("com.nuslivinglab.db.db");
 		Statement st = db.getStatement();
 		
 		PrintWriter out = resp.getWriter();
 		
-		String canteen_query = "", location_query = "", store_type_query = "", 
-				cuisine_query = "", halal_query = "", aircon_query="", distinct_query ="",
-				query_key_str="*";
-			
 		if (canteen != null) {
 			canteen_query = " AND canteen_name LIKE '%" + canteen + "%'";
 		}
 		
 		if (location != null) {
 			location_query = " AND location LIKE '%" + location + "%'";
-		}
+		} 
 		
 		if (store_type != null) {
 			store_type_query = " AND store_type LIKE '%" + store_type + "%'";
@@ -69,7 +73,7 @@ public class wte_web_api extends HttpServlet {
 		}
 		
 		if (halal != null) {
-			halal_query = " AND halal =" + halal;
+			halal_query = " AND halal ='" + halal + "'";
 		}
 		
 		if (aircon != null) {
@@ -84,21 +88,21 @@ public class wte_web_api extends HttpServlet {
 			query_key_str = query_key; 
 		}
 		
+		if(search == null) {
+			search="";
+		}
+		
+		if(search_string == null) {
+			search_string="";
+		}
+		
 		//output in json format
 		if(output!=null && output.equals("json")) {
 			JsonArray jArray = new JsonArray();
 			Gson gson = new GsonBuilder().serializeNulls().create();
 			String query;
 			
-			if((!canteen_query.equals("")) || (!location_query.equals("")) || (!store_type_query.equals("")) 
-					|| (!cuisine_query.equals("")) || (!halal_query.equals("")) || (!aircon_query.equals(""))) {
-				
-					//check if distinct and check for query_word
-					query = "SELECT " + distinct_query + " " + query_key_str + " from Campus_Food WHERE menu='N' " + canteen_query 
-								+ location_query + store_type_query + cuisine_query + halal_query + aircon_query;
-			} else {
-				query = "SELECT "+ distinct_query + " " + query_key_str +" from Campus_Food";
-			}
+			query = query_process();
 							
 			try {
 				ResultSet result = st.executeQuery(query);
@@ -129,22 +133,16 @@ public class wte_web_api extends HttpServlet {
 			
 			resp.setContentType("application/json");
 			out.print(gson.toJson(jArray));
+			
+			reset();
+			
 		} else {
 			resp.setContentType("text/xml");
 			out.println("<response>");
 				
 			String query;
 			
-			if((!canteen_query.equals("")) || (!location_query.equals("")) || (!store_type_query.equals("")) 
-					|| (!cuisine_query.equals("")) || (!halal_query.equals("")) || (!aircon_query.equals(""))) {
-				
-				//check if distinct and check for query_word
-				query = "SELECT " + distinct_query + " " + query_key_str + " from Campus_Food WHERE menu='N' " + canteen_query 
-							+ location_query + store_type_query + cuisine_query + halal_query + aircon_query;
-				
-			} else {
-				query = "SELECT "+ distinct_query + " " + query_key_str +" from Campus_Food";
-			}
+			query = query_process();
 					
 			out.println(query);
 			out.println(query_key_str);
@@ -179,7 +177,6 @@ public class wte_web_api extends HttpServlet {
 					}
 				}
 				
-				
 				int size =0;
 				if (result != null) 
 				{
@@ -199,6 +196,8 @@ public class wte_web_api extends HttpServlet {
 				out.println(e.toString());
 			}
 			out.println("</response>");
+			
+			reset();
 		}
 		db.close();
 	}
@@ -214,5 +213,57 @@ public class wte_web_api extends HttpServlet {
 		text = remove.replace("&", "&amp;");
 		
 		return text;
+	}
+	
+	private String query_process() {
+		String query = null;
+		
+		Boolean where = false;
+		
+		if((!canteen_query.equals("")) || (!location_query.equals("")) || (!store_type_query.equals("")) 
+				|| (!cuisine_query.equals("")) || (!halal_query.equals("")) || (!aircon_query.equals("")) ){ 
+				
+				//check if distinct and check for query_word
+				query = "SELECT " + distinct_query + " " + query_key_str + " from Campus_Food WHERE menu='N' " + canteen_query 
+							+ location_query + store_type_query + cuisine_query + halal_query + aircon_query;
+			
+			if(search.equals("advanced")) {
+				query = "SELECT "+ distinct_query + " " + query_key_str +" from Campus_Food WHERE (canteen_name LIKE '%" + search_string + "%'" +
+						" OR store_name LIKE '%" + search_string + "%' OR location LIKE '%" + search_string + "%' " +
+						" OR room_code LIKE '%" + search_string + "%' OR store_type LIKE '%" + search_string + "%' " +
+						" OR cuisine LIKE '%" + search_string + "%')" + "AND menu='N' " + canteen_query 
+						+ location_query + store_type_query + cuisine_query + halal_query + aircon_query;
+			}
+		} 
+		else {
+			
+			if(search.equals("") || (search.equals("basic") && search_string.equals(""))) { 
+				
+				query = "SELECT "+ distinct_query + " " + query_key_str +" from Campus_Food";
+				
+			} else if((search.equals("basic") && (!search_string.equals("")))) {
+				
+				query = "SELECT "+ distinct_query + " " + query_key_str +" from Campus_Food WHERE (canteen_name LIKE '%" + search_string + "%'" +
+						" OR store_name LIKE '%" + search_string + "%' OR location LIKE '%" + search_string + "%' " +
+						" OR room_code LIKE '%" + search_string + "%' OR store_type LIKE '%" + search_string + "%' " +
+						" OR cuisine LIKE '%" + search_string + "%')";
+				
+			}
+		}
+	
+		return query;
+	}
+	
+	private void reset() {
+		canteen_query = ""; 
+		location_query = ""; 
+		store_type_query = ""; 
+		cuisine_query = ""; 
+		halal_query = "";
+		aircon_query="";
+		distinct_query ="";
+		query_key_str="*";
+		search="";
+		search_string="";
 	}
 }
