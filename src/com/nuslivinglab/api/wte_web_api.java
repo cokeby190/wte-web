@@ -119,6 +119,10 @@ public class wte_web_api extends HttpServlet {
 						obj.addProperty("menu", result.getString("menu"));
 						obj.addProperty("aircon", result.getString("aircon"));
 						obj.addProperty("availability_weekday", result.getString("availability_weekday"));
+						obj.addProperty("availability_weekend", result.getString("availability_weekend"));
+						obj.addProperty("availability_vac_weekday", result.getString("availability_vac_weekday"));
+						obj.addProperty("availability_vac_weekend", result.getString("availability_vac_weekend"));
+						obj.addProperty("availability_pubhol", result.getString("availability_pubhol"));
 						jArray.add(obj);
 					} while (result.next());
 					
@@ -163,6 +167,10 @@ public class wte_web_api extends HttpServlet {
 						out.println("<menu>" + process_string(result.getString("menu")) + "</menu>");
 						out.println("<aircon>" + process_string(result.getString("aircon")) + "</aircon>");
 						out.println("<availability_weekday>" + process_string(result.getString("availability_weekday")) + "</availability_weekday>");
+						out.println("<availability_weekend>" + process_string(result.getString("availability_weekend")) + "</availability_weekend>");
+						out.println("<availability_vac_weekday>" + process_string(result.getString("availability_vac_weekday")) + "</availability_vac_weekday>");
+						out.println("<availability_vac_weekend>" + process_string(result.getString("availability_vac_weekend")) + "</availability_vac_weekend>");
+						out.println("<availability_pubhol>" + process_string(result.getString("availability_pubhol")) + "</availability_pubhol>");
 						out.println("</food_stall>");
 					} //else {
 					//	out.println("<errormessage>Your Search did not match any food stalls!):</errormessage>");
@@ -193,7 +201,6 @@ public class wte_web_api extends HttpServlet {
 				
 			} catch (SQLException e) {
 				e.printStackTrace();
-				out.println(e.toString());
 			}
 			out.println("</response>");
 			
