@@ -52,7 +52,8 @@ public class wte_web_api extends HttpServlet {
 		search = req.getParameter("search");
 		search_string = req.getParameter("search_string");
 		
-		Database db = DBFactory.loadDatabase("com.nuslivinglab.db.db");
+		//Database db = DBFactory.loadDatabase("com.nuslivinglab.db.db");
+		Database db = DBFactory.loadDatabase("com.nuslivinglab.db.db_pgsql");
 		Statement st = db.getStatement();
 		
 		PrintWriter out = resp.getWriter();
@@ -124,6 +125,7 @@ public class wte_web_api extends HttpServlet {
 						obj.addProperty("availability_vac_weekday", result.getString("availability_vac_weekday"));
 						obj.addProperty("availability_vac_weekend", result.getString("availability_vac_weekend"));
 						obj.addProperty("availability_pubhol", result.getString("availability_pubhol"));
+						//obj.addProperty("cam_no", result.getString("cam_no"));
 						jArray.add(obj);
 					} while (result.next());
 					
@@ -172,6 +174,7 @@ public class wte_web_api extends HttpServlet {
 						out.println("<availability_vac_weekday>" + process_string(result.getString("availability_vac_weekday")) + "</availability_vac_weekday>");
 						out.println("<availability_vac_weekend>" + process_string(result.getString("availability_vac_weekend")) + "</availability_vac_weekend>");
 						out.println("<availability_pubhol>" + process_string(result.getString("availability_pubhol")) + "</availability_pubhol>");
+						//out.println("<cam_no>" + process_string(result.getString("cam_no")) + "</cam_no>");
 						out.println("</food_stall>");
 					} //else {
 					//	out.println("<errormessage>Your Search did not match any food stalls!):</errormessage>");
@@ -232,29 +235,33 @@ public class wte_web_api extends HttpServlet {
 				|| (!cuisine_query.equals("")) || (!halal_query.equals("")) || (!aircon_query.equals("")) ){ 
 				
 				//check if distinct and check for query_word
-				query = "SELECT " + distinct_query + " " + query_key_str + " from Campus_Food WHERE menu='N' " + canteen_query 
-							+ location_query + store_type_query + cuisine_query + halal_query + aircon_query;
+				query = "SELECT " + distinct_query + " " + query_key_str + " from campus_food.campus_food WHERE menu='N' " + canteen_query 
+							+ location_query + store_type_query + cuisine_query +halal_query + aircon_query 
+							+ " ORDER BY canteen_name";
 			
 			if(search.equals("advanced")) {
-				query = "SELECT "+ distinct_query + " " + query_key_str +" from Campus_Food WHERE (canteen_name LIKE '%" + search_string + "%'" +
+				query = "SELECT "+ distinct_query + " " + query_key_str +" from campus_food.campus_food WHERE (canteen_name LIKE '%" + search_string + "%'" +
 						" OR store_name LIKE '%" + search_string + "%' OR location LIKE '%" + search_string + "%' " +
 						" OR room_code LIKE '%" + search_string + "%' OR store_type LIKE '%" + search_string + "%' " +
 						" OR cuisine LIKE '%" + search_string + "%')" + "AND menu='N' " + canteen_query 
-						+ location_query + store_type_query + cuisine_query + halal_query + aircon_query;
+						+ location_query + store_type_query + cuisine_query + halal_query + aircon_query 
+						+ " ORDER BY canteen_name";
 			}
 		} 
 		else {
 			
 			if(search.equals("") || (search.equals("basic") && search_string.equals(""))) { 
 				
-				query = "SELECT "+ distinct_query + " " + query_key_str +" from Campus_Food";
+				query = "SELECT "+ distinct_query + " " + query_key_str +" from campus_food.campus_food" 
+							+ " ORDER BY canteen_name";
 				
 			} else if((search.equals("basic") && (!search_string.equals("")))) {
 				
-				query = "SELECT "+ distinct_query + " " + query_key_str +" from Campus_Food WHERE (canteen_name LIKE '%" + search_string + "%'" +
+				query = "SELECT "+ distinct_query + " " + query_key_str +" from campus_food.campus_food WHERE (canteen_name LIKE '%" + search_string + "%'" +
 						" OR store_name LIKE '%" + search_string + "%' OR location LIKE '%" + search_string + "%' " +
 						" OR room_code LIKE '%" + search_string + "%' OR store_type LIKE '%" + search_string + "%' " +
-						" OR cuisine LIKE '%" + search_string + "%')";
+						" OR cuisine LIKE '%" + search_string + "%')"  
+						+ " ORDER BY canteen_name";
 				
 			}
 		}
