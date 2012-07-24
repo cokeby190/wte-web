@@ -252,8 +252,11 @@ public class wte_web_api extends HttpServlet {
 			
 			if(search.equals("") || (search.equals("basic") && search_string.equals(""))) { 
 				
-				query = "SELECT "+ distinct_query + " " + query_key_str +" from campus_food.campus_food" 
-							+ " ORDER BY canteen_name";
+				if(search.equals("basic") && search_string.equals(""))
+					query = "SELECT "+ distinct_query + " " + query_key_str +" from campus_food.campus_food" 
+								+ " ORDER BY canteen_name";
+				else 
+					query = "SELECT "+ distinct_query + " " + query_key_str +" from campus_food.campus_food";
 				
 			} else if((search.equals("basic") && (!search_string.equals("")))) {
 				
