@@ -115,34 +115,15 @@ public class wte_web_api extends HttpServlet {
 				ResultSet result = st.executeQuery(query);
 				
 				if (query_key_str.equals("*")) {
-					
-					if(search.equals("nearby")) { 
-						
-						while(result.next()) {
-							
-							JsonObject obj = new JsonObject();
-							obj.addProperty("canteen_name", result.getString("canteen_name"));
-							obj.addProperty("store_name", result.getString("store_name"));
-							obj.addProperty("location", result.getString("location"));
-							obj.addProperty("room_code", result.getString("room_code"));
-							obj.addProperty("store_type", result.getString("store_type"));
-							obj.addProperty("cuisine", result.getString("cuisine"));
-							obj.addProperty("halal", result.getString("halal"));
-							obj.addProperty("menu", result.getString("menu"));
-							obj.addProperty("aircon", result.getString("aircon"));
-							obj.addProperty("availability_weekday", result.getString("availability_weekday"));
-							obj.addProperty("availability_weekend", result.getString("availability_weekend"));
-							obj.addProperty("availability_vac_weekday", result.getString("availability_vac_weekday"));
-							obj.addProperty("availability_vac_weekend", result.getString("availability_vac_weekend"));
-							obj.addProperty("availability_pubhol", result.getString("availability_pubhol"));
-							obj.addProperty("img_path", result.getString("img_path"));
-							obj.addProperty("dist", result.getString(20));
-							//obj.addProperty("cam_no", result.getString("cam_no"));
-							jArray.add(obj);
-						}
-					}
-					
+
 					while(result.next()) {
+
+						String cam_no_str = result.getString("cam_no");
+						
+						if(cam_no_str == null) {
+							cam_no_str = "Not Available";
+						}
+						
 						JsonObject obj = new JsonObject();
 						obj.addProperty("canteen_name", result.getString("canteen_name"));
 						obj.addProperty("store_name", result.getString("store_name"));
@@ -159,7 +140,11 @@ public class wte_web_api extends HttpServlet {
 						obj.addProperty("availability_vac_weekend", result.getString("availability_vac_weekend"));
 						obj.addProperty("availability_pubhol", result.getString("availability_pubhol"));
 						obj.addProperty("img_path", result.getString("img_path"));
-						//obj.addProperty("cam_no", result.getString("cam_no"));
+						obj.addProperty("cam_no", cam_no_str);
+						if(search.equals("nearby")) {
+							obj.addProperty("dist", result.getString(20));
+						}
+						
 						jArray.add(obj);
 					}
 					
@@ -207,33 +192,15 @@ public class wte_web_api extends HttpServlet {
 				ResultSet result = st.executeQuery(query);
 
 				if (query_key_str.equals("*")) {
-					
-					if(search.equals("nearby")) { 
-						
-						while(result.next()) {
-							out.println("<food_stall>");
-							out.println("<canteen_name>" + process_string(result.getString("canteen_name")) + "</canteen_name>");
-							out.println("<store_name>" + process_string(result.getString("store_name")) + "</store_name>");
-							out.println("<location>" + process_string(result.getString("location")) + "</location>");
-							out.println("<room_code>" + process_string(result.getString("room_code")) + "</room_code>");
-							out.println("<store_type>" + process_string(result.getString("store_type")) + "</store_type>");
-							out.println("<cuisine>" + process_string(result.getString("cuisine")) + "</cuisine>");
-							out.println("<halal>" + process_string(result.getString("halal")) + "</halal>");
-							out.println("<menu>" + process_string(result.getString("menu")) + "</menu>");
-							out.println("<aircon>" + process_string(result.getString("aircon")) + "</aircon>");
-							out.println("<availability_weekday>" + process_string(result.getString("availability_weekday")) + "</availability_weekday>");
-							out.println("<availability_weekend>" + process_string(result.getString("availability_weekend")) + "</availability_weekend>");
-							out.println("<availability_vac_weekday>" + process_string(result.getString("availability_vac_weekday")) + "</availability_vac_weekday>");
-							out.println("<availability_vac_weekend>" + process_string(result.getString("availability_vac_weekend")) + "</availability_vac_weekend>");
-							out.println("<availability_pubhol>" + process_string(result.getString("availability_pubhol")) + "</availability_pubhol>");
-							out.println("<img_path>" + process_string(result.getString("img_path")) + "</img_path>");
-							out.println("<dist>" + process_string(result.getString(20))  + " metres away from here!" +  "</dist>");
-							//out.println("<cam_no>" + process_string(result.getString("cam_no")) + "</cam_no>");
-							out.println("</food_stall>");
-						}
-					}
-					
+
 					while(result.next()) {
+						
+						String cam_no_str = result.getString("cam_no");
+						
+						if(cam_no_str == null) {
+							cam_no_str = "Not Available";
+						}
+						
 						out.println("<food_stall>");
 						out.println("<canteen_name>" + process_string(result.getString("canteen_name")) + "</canteen_name>");
 						out.println("<store_name>" + process_string(result.getString("store_name")) + "</store_name>");
@@ -250,9 +217,13 @@ public class wte_web_api extends HttpServlet {
 						out.println("<availability_vac_weekend>" + process_string(result.getString("availability_vac_weekend")) + "</availability_vac_weekend>");
 						out.println("<availability_pubhol>" + process_string(result.getString("availability_pubhol")) + "</availability_pubhol>");
 						out.println("<img_path>" + process_string(result.getString("img_path")) + "</img_path>");
-						//out.println("<cam_no>" + process_string(result.getString("cam_no")) + "</cam_no>");
+						out.println("<cam_no>" + cam_no_str + "</cam_no>");			
+						if(search.equals("nearby")) { 
+							out.println("<dist>" + process_string(result.getString(20))  + " metres away from here!" +  "</dist>");
+						}
 						out.println("</food_stall>");
-					} 
+					}
+					
 				} else if (!query_key_str.equals("*")) {
 					while(result.next()) {
 						out.println("<food_list>");
@@ -286,6 +257,7 @@ public class wte_web_api extends HttpServlet {
 	}
 	
 	public static String process_string(String text) {
+		
 		//remove accents
 		text = Normalizer.normalize(text, Normalizer.Form.NFD);
 		
@@ -300,8 +272,6 @@ public class wte_web_api extends HttpServlet {
 	
 	private String query_process() {
 		String query = null;
-		
-		Boolean where = false;
 		
 		if(lat_str != null)
 			lat = Double.valueOf(lat_str);
@@ -364,8 +334,6 @@ public class wte_web_api extends HttpServlet {
 								" OR room_code LIKE '%" + search_string + "%' OR store_type LIKE '%" + search_string + "%' " +
 								" OR cuisine LIKE '%" + search_string + "%')"  
 								+ " ORDER BY " + distance + ", c.canteen_name";
-				
-				
 			}
 		}
 	
