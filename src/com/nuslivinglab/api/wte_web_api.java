@@ -37,7 +37,7 @@ public class wte_web_api extends HttpServlet {
     
     private double lat=1.296469, lon=103.776373, radius = 2000;
     
-    private String search, search_string, lat_str, lon_str, radius_str;
+    private String search, search_string, lat_str, lon_str, radius_str, id;
     
 	@Override
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) 
@@ -45,6 +45,7 @@ public class wte_web_api extends HttpServlet {
 		String canteen = req.getParameter("canteen_name");
 		String location = req.getParameter("location");
 		String store_type = req.getParameter("store_type");
+		id = req.getParameter("id");
 		String cuisine = req.getParameter("cuisine");
 		String halal = req.getParameter("halal");
 		String aircon = req.getParameter("aircon");
@@ -73,6 +74,10 @@ public class wte_web_api extends HttpServlet {
 		
 		if (store_type != null) {
 			store_type_query = " AND store_type LIKE '%" + store_type + "%'";
+		}
+		
+		if (id == null) {
+			id = "";
 		}
 		
 		if (cuisine != null) {
@@ -125,6 +130,7 @@ public class wte_web_api extends HttpServlet {
 						}
 						
 						JsonObject obj = new JsonObject();
+						obj.addProperty("id", result.getString("id"));
 						obj.addProperty("canteen_name", result.getString("canteen_name"));
 						obj.addProperty("store_name", result.getString("store_name"));
 						obj.addProperty("location", result.getString("location"));
@@ -202,6 +208,7 @@ public class wte_web_api extends HttpServlet {
 						}
 						
 						out.println("<food_stall>");
+						out.println("<id>" + result.getString("id") + "</id>");
 						out.println("<canteen_name>" + process_string(result.getString("canteen_name")) + "</canteen_name>");
 						out.println("<store_name>" + process_string(result.getString("store_name")) + "</store_name>");
 						out.println("<location>" + process_string(result.getString("location")) + "</location>");
@@ -284,20 +291,29 @@ public class wte_web_api extends HttpServlet {
 				|| (!cuisine_query.equals("")) || (!halal_query.equals("")) || (!aircon_query.equals("")) ){ 
 				
 				//check if distinct and check for query_word
-				query = "SELECT " + distinct_query + " " + query_key_str + " from campus_food.campus_food WHERE menu='N' " + canteen_query 
+				query = "SELECT " + distinct_query + " " + query_key_str + " from campus_food.campus_food WHERE id IS NOT NULL " + canteen_query 
 							+ location_query + store_type_query + cuisine_query +halal_query + aircon_query 
 							+ " ORDER BY canteen_name";
 			
+				//for Advanced Spinner
+			if(search.equals("")) {
+				query = "SELECT "+ distinct_query + " " + query_key_str +" from campus_food.campus_food WHERE id IS NOT NULL " + canteen_query 
+							+ location_query + store_type_query + cuisine_query +halal_query + aircon_query;
+			}
+				
+			//ADVANCED FILTER
 			if(search.equals("advanced")) {
-				query = "SELECT "+ distinct_query + " " + query_key_str +" from campus_food.campus_food WHERE (canteen_name LIKE '%" + search_string + "%'" +
-						" OR store_name LIKE '%" + search_string + "%' OR location LIKE '%" + search_string + "%' " +
-						" OR room_code LIKE '%" + search_string + "%' OR store_type LIKE '%" + search_string + "%' " +
-						" OR cuisine LIKE '%" + search_string + "%')" + "AND menu='N' " + canteen_query 
+				query = "SELECT "+ distinct_query + " " + query_key_str +" from campus_food.campus_food WHERE id IS NOT NULL" + canteen_query 
 						+ location_query + store_type_query + cuisine_query + halal_query + aircon_query 
 						+ " ORDER BY canteen_name";
 			}
-		} 
-		else {
+		} else if(!id.equals("")) {
+			
+			//SEARCH BY ID
+			query = "SELECT " + distinct_query + " " + query_key_str + " from campus_food.campus_food WHERE id = '" + id + "'"
+					+ " ORDER BY canteen_name";
+			
+		} else{
 			
 			if(search.equals("") || (search.equals("basic") && search_string.equals("")) || 
 					(search.equals("nearby") && search_string.equals(""))) { 
@@ -318,10 +334,10 @@ public class wte_web_api extends HttpServlet {
 				
 			} else if((search.equals("basic") && (!search_string.equals("")))) {
 				
-				query = "SELECT "+ distinct_query + " " + query_key_str +" from campus_food.campus_food WHERE (canteen_name LIKE '%" + search_string + "%'" +
-						" OR store_name LIKE '%" + search_string + "%' OR location LIKE '%" + search_string + "%' " +
-						" OR room_code LIKE '%" + search_string + "%' OR store_type LIKE '%" + search_string + "%' " +
-						" OR cuisine LIKE '%" + search_string + "%')"  
+				query = "SELECT "+ distinct_query + " " + query_key_str +" from campus_food.campus_food WHERE (canteen_name ILIKE '%" + search_string + "%'" +
+						" OR store_name ILIKE '%" + search_string + "%' OR location ILIKE '%" + search_string + "%' " +
+						" OR room_code ILIKE '%" + search_string + "%' OR store_type ILIKE '%" + search_string + "%' " +
+						" OR cuisine ILIKE '%" + search_string + "%')"  
 						+ " ORDER BY canteen_name";
 				
 			} else if (search.equals("nearby") && (!search_string.equals(""))) {
@@ -329,10 +345,10 @@ public class wte_web_api extends HttpServlet {
 				String distance = "round(st_distance(st_transform(ST_GeomFromText('POINT(" + lon + " " + lat + ")',4326),900913),st_transform(the_geom,900913)))";
 				query = "SELECT " + distinct_query + " c.*, round(st_distance(st_transform(ST_GeomFromText('POINT(" + lon + " " + lat + ")',4326),900913),st_transform(the_geom,900913))) " + 
 						"FROM campus_food.campus_food c, public.buildings b WHERE b.code = c.room_code AND (" + distance + "< " + radius + ") AND " + 
-								"(canteen_name LIKE '%" + search_string + "%'" +
-								" OR store_name LIKE '%" + search_string + "%' OR location LIKE '%" + search_string + "%' " +
-								" OR room_code LIKE '%" + search_string + "%' OR store_type LIKE '%" + search_string + "%' " +
-								" OR cuisine LIKE '%" + search_string + "%')"  
+								"(canteen_name ILIKE '%" + search_string + "%'" +
+								" OR store_name ILIKE '%" + search_string + "%' OR location ILIKE '%" + search_string + "%' " +
+								" OR room_code ILIKE '%" + search_string + "%' OR store_type ILIKE '%" + search_string + "%' " +
+								" OR cuisine ILIKE '%" + search_string + "%')"  
 								+ " ORDER BY " + distance + ", c.canteen_name";
 			}
 		}
