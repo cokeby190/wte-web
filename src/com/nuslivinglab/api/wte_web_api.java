@@ -567,7 +567,7 @@ public class wte_web_api extends HttpServlet {
 			
 			query = query_process();
 					
-			//out.println(query);
+			out.println("<query>" + query + "</query>");
 						
 			try {
 				ResultSet result = st.executeQuery(query);
@@ -791,7 +791,7 @@ public class wte_web_api extends HttpServlet {
 //								+ " ORDER BY " + distance + ", c.canteen_name";
 //			}
 //		}
-	
+		
 		return query;
 	}
 	
