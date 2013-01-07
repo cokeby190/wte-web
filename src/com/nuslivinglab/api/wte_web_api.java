@@ -191,9 +191,9 @@ public class wte_web_api extends HttpServlet {
 			
 			query = query_process();
 			
-			out.println("<hello>" + "hello" + "</hello>");
+			//out.println("<hello>" + "hello" + "</hello>");
 					
-			out.println("<query>" + query + "</query>");
+			//out.println("<query>" + query + "</query>");
 						
 			try {
 				ResultSet result = st.executeQuery(query);
